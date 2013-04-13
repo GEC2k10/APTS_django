@@ -3,7 +3,7 @@
 	<h2>Delete files/Directories</h2>
 	<br><br>
 	<div class=scrollable>
-	<form action=/student/delete method=post>
+	<form action=/student/delete/ method=post>
 	{% csrf_token %}
 		Select Directory to delete:<br>
 			{% for i in listing %}

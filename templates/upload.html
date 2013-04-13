@@ -8,7 +8,7 @@
 	{% endif %}
 	<br><br>
 	<div class=scrollable>
-	<form action=/student/upload method=post enctype="multipart/form-data">
+	<form action=/student/upload/ method=post enctype="multipart/form-data">
 	{% csrf_token %}
 		Select file:<br><br>
 			<input type=file name=file multiple><br><br>

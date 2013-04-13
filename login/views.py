@@ -27,6 +27,8 @@ def home(request):
     page=request.user.groups.all()[0].name+'.html'
     if 'guide' in page and 'project' not in request.session:
         return HttpResponseRedirect('/guide/selectproject')
+    elif 'evalueator' in page and 'project' not in request.session:
+        return HttpResponseRedirect('/guide/selectproject')
     ret={}
     if 'message' in request.GET:
         ret={'message':request.GET['message']}

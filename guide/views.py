@@ -12,9 +12,17 @@ from django.conf import settings
 def is_guide(u):
     l=u.groups.all()
     for i in l:
-        if i.name=='guide':
+        if i.name=='guide' or i.name=='evalueator':
             return True
     return False
+@login_required
+@user_passes_test(lambda u: is_guide(u),login_url='/logout')
+@cache_control(no_cache=True, must_revalidate=True,no_store=True)
+def viewcommit(request):
+    if request.method=='GET':
+        a=Commit.objects.filter(project__id=request.session['project'],commit=request.GET['commit'])
+        return render_to_response('viewcommit.html',{'msg':a})
+
 @login_required
 @user_passes_test(lambda u: is_guide(u),login_url='/logout')
 @cache_control(no_cache=True, must_revalidate=True,no_store=True)
@@ -48,33 +56,56 @@ def commit(request):
         arg['proj']=request.session['project']
         return render_to_response('commit.html',arg,context_instance=RequestContext(request))
     else:
-        repo=os.path.join(settings.REPOS,request.POST['proj'])
+        p=Project.objects.get(pk=request.session['project'])
+        repo=os.path.join(settings.REPOS,p.name)
         repo=Repo(repo)
         clean='nothing to commit (working directory clean)'
         if clean not in repo.git.status():
             message=str(datetime.now())+'\n'+request.POST['commitMessage']
             repo.git.add('APTS')
             repo.index.commit(message)
-            commitname=repo.head.commit.hexsha[:10]
-            commit=os.path.join(settings.COMMITS,request.POST['proj']+'/head')
-            commitname=os.path.join(settings.COMMITS,request.POST['proj']+'/%s'%(commitname))
-            os.rename(commit,commitname)
-            f=open(commit,'w')
-            f.close()
-            notifyCommit(request.POST['proj'])
+            commitname=repo.head.commit.hexsha[:8]
+            p=Commit.objects.filter(commit=repo.active_branch.name,project__id=)
+            for i in p:
+                i.commit=commitname
+                i.save()
+            notifyCommit(request.session['project'])
         else:
             return HttpResponseRedirect('/home?message=Nothing to commit')
         return HttpResponseRedirect('/home?message=Commited Successfully')
+
+@login_required
+@user_passes_test(lambda u: is_guide(u),login_url='/logout')
+@cache_control(no_cache=True, must_revalidate=True,no_store=True)
+def mail(request):
+    if request.method=='GET':
+        arg={}
+        arg['proj']=request.session['project']
+        return render_to_response('mail.html',arg,context_instance=RequestContext(request))
+    else:
+        repo=os.path.join(settings.REPOS,request.session['project'])
+        repo=Repo(repo)
+        clean='nothing to commit (working directory clean)'
+        notifyTeam(request.session['project'],request.POST['msg'])
+        return HttpResponseRedirect('/home?message=Mail Sent')
+
 def notifyCommit(proj):
     from mails import Commit
     from django.contrib.auth.models import User
+
+    s=Student.objects.filter(project__id=proj)
+    proj=s.project.name
+    for i in s:
+        s.user.email_user("Commit notification",Commit%(proj))
+    return
+
+def notifyTeam(proj,msg):
+    from django.contrib.auth.models import User
     proj_conf=os.path.join(settings.USERS,proj)
-    f=open(proj_conf)
-    f.readline()
-    for i in f.readlines():
-        u=User.objects.filter(username=i.strip())[0]
-        u.email_user("Commit notification",Commit%(proj))
-    f.close()
+    s=Student.objects.filter(project__id=proj)
+    proj=s.project.name
+    for i in s:
+        s.user.email_user('Project Notification',msg)
     return
 
 @login_required
@@ -86,7 +117,7 @@ def selectproject(request):
         return HttpResponseRedirect('/home')
     else:
         ret={}
-        ret['proj']=getActiveProjects()
+        ret['proj']=Project.objects.filter(active=True)
         return render_to_response("selectProject.html",ret,context_instance=RequestContext(request))
 
 def getActiveProjects():

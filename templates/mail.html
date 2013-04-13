@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
-	<title>Commit</title>
-	<h1>Commit</h1>
-	<form action=/guide/commit/ method=post>
+	<title>Mail Team</title>
+	<h1>Mail Team</h1>
+	<form action=/guide/email/ method=post>
 	{% csrf_token %}
 	<table cellpadding=5px>
 	<tr>
-		<td><h3>Enter commit message</h3></td>
+		<td><h3>Enter message</h3></td>
 	</tr>
 	<tr>
 		<td>Project : {{ proj }}</td>
 	</tr>
 	<tr>
-		<td><textarea rows=15 cols=50 name=commitMessage ></textarea></td>
+		<td><textarea rows=15 cols=50 name=msg ></textarea></td>
 	</tr>
 	<tr>
 		<td><input type=hidden value={{ proj }} name=proj></td>
