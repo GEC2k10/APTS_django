@@ -9,6 +9,8 @@ from datetime import datetime
 import re
 from git import Repo
 from django.conf import settings
+from guide.models import Project,Commit,Guide
+from student.models import Student
 def is_guide(u):
     l=u.groups.all()
     for i in l:
